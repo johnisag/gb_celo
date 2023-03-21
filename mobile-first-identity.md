@@ -8,7 +8,7 @@ From the beginning of this track, we have been talking about Celo's focus on bei
 
 Celo's purpose, from the beginning, has always been to be able to make financial tools accessible to anyone in the world who has access to a mobile phone. Financial tools that can be unlocked through the power of DeFi, often times in places where users do not even have access to the centralized counterparts.
 
-A barrier for the regular usage of a lot of blockchain systems in underserved areas is the reliance on having a long, hard to remember wallet address. **Celo changes this by introducing their lightweight identity system that can map phone numbers to wallet addresses, in a decentralized and secure manner**. Let's see how that works.
+A barrier for the regular usage of a lot of blockchain systems in underserved areas is the reliance on having a long, hard to remember wallet address. **Celo changes this by introducing their lightweight identity system that can **<mark style="color:purple;">**map phone numbers to wallet addresses**</mark>**, in a decentralized and secure manner**. Let's see how that works.
 
 ### Attestation Protocol
 
@@ -39,29 +39,19 @@ This randomness allows Celo to perform random validator selection, which is impo
 
 This is the second piece of this puzzle.
 
-### Attestation Service
+### The Flow
 
-The Attestation Service is a simple `Node.js` service that is used to send SMS's to phone numbers. It does this by integrating with services like [Twilio](https://www.twilio.com/) and [Nexmo (now Vonage)](https://developer.vonage.com/) - and Celo has plans to expand the number of options available in the future.
+Now that we have the pieces of the puzzle, let's start putting them together and seeing how this works along with our fictitious character **Alice**.
 
-This service is run by all validators on the Celo network, i.e. all validators must be able to send SMS's if required.
-
-This is one piece of this puzzle.
-
-### Randomness
-
-Celo has a pseudo-randomness generator built in to the network, and random values can be requested through their deployed `Random` contract on the network.
-
-This randomness allows Celo to perform random validator selection, which is important in this scenario.
-
-This is the second piece of this puzzle.
+Suppose Alice has a Celo wallet, and wants to link her phone number, to allow her friends and family to easily do transactions with her.
 
 <figure><img src=".gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
 
-First, Alice instructs her wallet to request an attestation from the `Attestations` smart contract, that is deployed on the Celo network. To do so, she pays a small gas fees to call a function on the `Attestations` contract.
+First, Alice instructs her wallet to request an attestation from the **`Attestations` smart contract,** that is deployed on the Celo network. To do so, she pays a small gas fees to call a function on the **`Attestations` ** contract.
 
-Secondly, the `Attestations` contract fetches a random value from the `Random` contract, which is used to choose a random validator from the currently active validator set. Since all validators are required to run the Attestation Service, Alice can use them to request a message.
+Secondly, the **`Attestations` ** contract **fetches a random value from the `Random` contract**, which is used to choose a random validator from the currently active validator set. Since all validators are required to run the Attestation Service, Alice can use them to request a message.
 
-Alice sends a request to the randomly selected validator to issue her an OTP. The validator signs over Alice's identifier (more on this in the next section) using their private key, and sends the signed message to Alice over SMS.
+**Alice sends a request to the randomly selected validator to issue her an OTP.** The validator signs over Alice's identifier (more on this in the next section) using their private key, and sends the signed message to Alice over SMS.
 
 When Alice receives this message, she can submit this message to the `Attestations` smart contract - which verifies the signature and verifies that it indeed came from the randomly selected validator. If everything checked out, Alice's identifier is now linked to her wallet address.
 
