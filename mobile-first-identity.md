@@ -12,7 +12,7 @@ A barrier for the regular usage of a lot of blockchain systems in underserved ar
 
 ### Attestation Protocol
 
-<figure><img src=".gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 Attestation means "evidence or proof of something". Celo has an Attestations Protocol which asks users to prove control over a phone number, which they can then link to their wallet address.
 

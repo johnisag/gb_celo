@@ -4,7 +4,7 @@ description: Celo Developer Environment
 
 # Setting Dev Env
 
-Since Celo is an EVM based chain, most of the development tooling used for Celo is the same as Ethereum. We can continue to use Solidity as our smart contracts programming language, and also use Hardhat to automate deployments for us. 🎉
+Since Celo is an EVM based chain, most of the development tooling used for Celo is the same as Ethereum. **We can continue to use Solidity** as our smart contracts programming language, and **also use Hardhat** to automate deployments for us. 🎉
 
 ### Wallets
 
