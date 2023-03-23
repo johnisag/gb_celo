@@ -14,14 +14,14 @@ Typically the easiest option to get started developing is by adding a network to
 
 So if you want to use things like Phone Number to Wallet Address mapping and using stablecoins to pay gas for transactions, you're going to need a Celo mobile wallet.
 
-<figure><img src=".gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (4) (1).png" alt=""><figcaption></figcaption></figure>
 
 Therefore, for development purposes, if you want access to the full suite of what Celo has to offer, you should sign up for the official [Celo Developer Wallet](https://celo.org/developers/wallet). Alternatively, you can just add the Celo chain information to Metamask. While you can use it on the web, the full features are only available on mobile, so we recommend installing it on your Android or iOS device.
 
 * NOTE: For iOS, you will also have to enroll your phone into Apple's Testflight program, used for testing apps. When you go to install the iOS app from the above link, it will walk you through how to do that.\
 
 
-![](.gitbook/assets/image.png)
+![](<.gitbook/assets/image (3).png>)
 
 
 

@@ -10,7 +10,7 @@ Celo's blockchain implementation, the 'official' one developed by the Celo team,
 
 ### Byzantine Generals' Problem
 
-<figure><img src=".gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 The Byzantine Generals' Problem was conceived in 1982 as a logical dilemma. While it may seem a bit random, this problem plays a huge role in the design of every single blockchain system.
 
