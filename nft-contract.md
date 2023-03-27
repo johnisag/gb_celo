@@ -29,7 +29,7 @@ We will divide this lesson into three parts - Smart contracts, Subgraph, and Fro
 
 This is what we will be building, by the end of this lesson series:
 
-<figure><img src=".gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
 
 
 

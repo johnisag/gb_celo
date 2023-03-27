@@ -21,7 +21,7 @@ Therefore, for development purposes, if you want access to the full suite of wha
 * NOTE: For iOS, you will also have to enroll your phone into Apple's Testflight program, used for testing apps. When you go to install the iOS app from the above link, it will walk you through how to do that.\
 
 
-![](<.gitbook/assets/image (3) (2).png>)
+![](<.gitbook/assets/image (3).png>)
 
 
 

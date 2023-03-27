@@ -121,7 +121,7 @@ BUT...
 
 You might be thinking, if we can just request ODIS to send us the pepper, how is that any better? Why can't an attacker just get the pepper for every phone number, and then build a rainbow table out of that?
 
-<figure><img src=".gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Well, the answer is that ODIS is rate limited. ODIS calculates an account's reputation based on transaction history, requests history, account balance, etc. These limits are set in a way to prohibit scraping large numbers of peppers, while allowing typical user wallets to conveniently fetch peppers for their contacts.
 

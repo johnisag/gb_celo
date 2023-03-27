@@ -4,7 +4,7 @@ description: Ship a true NFT Marketplace on Celo - Part 2
 
 # NFT - Indexing - Graph
 
-<figure><img src=".gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
 
 For our NFT marketplace to show all listings on the marketplace, we need to somehow keep track of the current active listings. This is where The Graph comes in!
 
@@ -67,3 +67,51 @@ graph init
 12. Wait for the CLI to set up your project.
 
 > HELP : For instances where you get errors, try installing the CLI using npm : `npm i -g @graphprotocol/graph-cli`
+
+#### 😎 Git Good
+
+The Graph CLI also initializes a Git repo when it sets up the project. However, since we are creating the subgraph within the parent `celo-nft-marketplace` directory, which ideally should be the git repository, we will delete the git repo that has been initialized within the `subgraph` folder.
+
+This is done so we don't end up having Git Submodules, i.e. a repo inside a repo, which can be annoying.
+
+Run the following command in your terminal, from the `subgraph` directory:
+
+```
+# Linux / macOScd subgraphrm -rf .git
+# Windowscd subgraphrmdir /s /q .git
+```
+
+Also, let's create a `.gitignore` file, because for some reason the Graph CLI does not do that (even though it initializes a Git repo, lol). Without it, when you try pushing to Github you will end up pushing all your `node_modules` and auto-generated files as well, which is never good.
+
+Create a file named `.gitignore` within the subgraph directory using VS Code, or your preferred code editor, and add the following lines to it:
+
+```
+build/node_modules/generated/
+```
+
+This will mark the three folders mentioned as ignored and they will not be pushed to Github when you attempt to do so.
+
+#### 🔑 Adding your Deploy Key
+
+You need to set up a deployment key, so that the CLI knows which account to deploy the subgraph to. To do this, you first need to login to the website and retrieve your key.
+
+1. Login to [The Graph Hosted Service](https://thegraph.com/hosted-service/) using your Github account
+2. Open your [dashboard](https://thegraph.com/hosted-service/dashboard)
+3. Copy the `Access Token` that's present on your dashboard
+
+Now, in your terminal, run the following command while pointing to the `subgraph` directory
+
+```
+graph auth
+```
+
+Select `hosted-service` for the Product, and then enter your access token. If you see something like:
+
+```
+Deploy key set for https://api.thegraph.com/deploy/
+```
+
+then you're all set to go!
+
+
+
