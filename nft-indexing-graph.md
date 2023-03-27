@@ -93,19 +93,19 @@ This will mark the three folders mentioned as ignored and they will not be pushe
 
 #### 🔑 Adding your Deploy Key
 
-You need to set up a deployment key, so that the CLI knows which account to deploy the subgraph to. To do this, you first need to login to the website and retrieve your key.
+### **Deploy the graph**
 
-1. Login to [The Graph Hosted Service](https://thegraph.com/hosted-service/) using your Github account
-2. Open your [dashboard](https://thegraph.com/hosted-service/dashboard)
-3. Copy the `Access Token` that's present on your dashboard
+* Go to [The Graph's Hosted Service](https://thegraph.com/hosted-service/),&#x20;
+* Click on **`My Dashboard`**
+* `Select your subgraph`
+* Copy the **`Access Token`**
+* Paste it for the `Deploy Key`
 
-Now, in your terminal, run the following command while pointing to the `subgraph` directory
-
+```sh
+graph auth --product hosted-service ACCCESS_TOKEN
 ```
-graph auth
-```
 
-Select `hosted-service` for the Product, and then enter your access token. If you see something like:
+&#x20;If you see something like:
 
 ```
 Deploy key set for https://api.thegraph.com/deploy/
@@ -113,5 +113,5 @@ Deploy key set for https://api.thegraph.com/deploy/
 
 then you're all set to go!
 
-
+#### ⛩ File Structure
 
