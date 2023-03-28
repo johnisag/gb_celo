@@ -411,7 +411,7 @@ There is only one thing we need to do before that, which is we need to visit our
 1. Open the dashboard, and click on `Add Subgraph`
 2. Enter the name `Celo NFT Marketplace`. Your generated subgraph URL should match the subgraph name we set in the CLI earlier, that follows `GITHUB_USERNAME/celo-nft-marketplace`. In my case, this looks like,
 
-<figure><img src=".gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (4).png" alt=""><figcaption></figcaption></figure>
 
 1. Fill in the rest of the information however you'd like
 2. Click on `Create Subgraph`
