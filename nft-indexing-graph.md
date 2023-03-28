@@ -4,7 +4,7 @@ description: Ship a true NFT Marketplace on Celo - Part 2
 
 # NFT - Indexing - Graph
 
-<figure><img src=".gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
 
 For our NFT marketplace to show all listings on the marketplace, we need to somehow keep track of the current active listings. This is where The Graph comes in!
 
@@ -115,3 +115,365 @@ then you're all set to go!
 
 #### ⛩ File Structure
 
+At this point, you should have reached a file structure that looks like this.
+
+```
+subgraph/
+├─ abis/│  
+├─ NFTMarketplace.json
+├─ generated/
+│  ├─ NFTMarketplace/
+│  │  ├─ NFTMarketplace.ts
+│  ├─ schema.ts
+├─ node_modules/
+├─ src/
+│  ├─ nft-marketplace.ts
+├─ package.json
+├─ schema.graphql
+├─ subgraph.yaml
+├─ tsconfig.json
+├─ yarn.lock
+```
+
+> NOTE : Subgraph projects seem to be using Typescript by default. Actually, they use a tighter subset of Typescript called AssemblyScript. This is because the scripts we will write get compiled into WebAssembly (WASM) and run on The Graph's nodes. AssemblyScript is a stricter version of Typescript that can be compiled into WASM - whereas full-featured Javascript/Typescript cannot be. Other languages such as Rust, Golang, C, C++, etc can also be compiled into WASM.
+
+There are three main files we will be touching in this project, and should take time to understand.
+
+* `subgraph.yaml`
+* `schema.graphql`
+* `src/nft-marketplace.ts`
+
+#### 🤨 The Manifest
+
+`subgraph.yaml` is your manifest - it defines the contract to listen for events to, the specific events to listen to, defines the network on which this lives, and provides other metadata.
+
+If we open that file, it should look something like this:
+
+```yaml
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: NFTMarketplace
+    network: celo-alfajores
+    source:
+      address: "0xd6275a9c30eB83e126F622285D832D9c4105A489"
+      abi: NFTMarketplace
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - ListingCancelled
+        - ListingCreated
+        - ListingPurchased
+        - ListingUpdated
+      abis:
+        - name: NFTMarketplace
+          file: ./abis/NFTMarketplace.json
+      eventHandlers:
+        - event: ListingCancelled(address,uint256,address)
+          handler: handleListingCancelled
+        - event: ListingCreated(address,uint256,uint256,address)
+          handler: handleListingCreated
+        - event: ListingPurchased(address,uint256,address,address)
+          handler: handleListingPurchased
+        - event: ListingUpdated(address,uint256,uint256,address)
+          handler: handleListingUpdated
+      file: ./src/nft-marketplace.ts
+```
+
+Few things to note here:
+
+* `dataSources` is the main block we want to focus on, and is literally used to define the data source for our indexer
+* `source` block defines the contract address and a reference to its ABI. Note that the ABI is only given a name, as the actual file path is referenced to later in the `abis` block
+* `eventHandlers` has the definitions of all the events our contract had, which the CLI was able to automatically generate from looking at the ABI. Each event also has a `handler` defined, which will be the function name within our script to handle data coming from that event.
+* `file` references `/src/nft-marketplace.ts` - this is where we will write our script.
+
+For now, we will just make one small change to this manifest. Since The Graph works by scanning every block of the blockchain trying to find events which match your data sources, by default, it will start scanning from the genesis block of the blockchain.
+
+> DEFINITION : A Genesis Block is the name given to the first block of a cryptocurrency. In this case, it's the block 0 of Celo.
+
+However, that will take a lot of time, as there are millions of blocks which we know for sure don't have any events we are interested in, since our contract was only recently deployed.
+
+Therefore, to speed it up, we can define a `startBlock` field to tell The Graph where to start scanning from. We will set this value to be the block in which our contract was deployed.
+
+Search up your contract address on [CeloScan](https://alfajores.celoscan.io/), find the `Contract Creation` transaction, copy the block number of that transaction, and add the following line to your manifest:
+
+#### 🧱 The Schema
+
+Now let's take a look at the `schema.graphql` file.
+
+This file defines the entities, or the types, of data that make up the set of possible data you want to query on the service. If you have ever worked with traditional databases, like MongoDB or MySQL before, you can think of Entities as models or tables in the database, where each piece of data needs to conform to that type.
+
+By default, it looks something like this
+
+```javascript
+type ExampleEntity @entity {
+  id: ID!
+  count: BigInt!
+  nftAddress: Bytes! # address
+  tokenId: BigInt! # uint256
+}
+```
+
+Now, let's think about the data we want to be storing and indexing. The whole point of doing this is being able to fetch all active listings at any given point, so we can display them on our dApp properly.
+
+Even though we have four events - `ListingCreated`, `ListingUpdated`, `ListingCanceled`, and `ListingPurchased` - all four of them revolve around the concept of 'Listings'.
+
+Therefore, we can just use a single data model/entity - `ListingEntity` - which uniquely identifies a certain listing. When a new listing is created, a new entity is created. Any updates made will update the existing entity. Cancelling will delete that entity. Purchases will mark that entity as purchased, to display appropriately.
+
+If you're still confused, don't worry, once we start writing a script and seeing it in action it will make more sense. Also, always feel free to ask on the [Discord](https://discord.gg/zyuxAkbBS5) for help!
+
+For now, let's replace the contents of the file with the following
+
+```graphql
+type ListingEntity @entity {
+  id: ID!
+  nftAddress: Bytes! # address
+  tokenId: BigInt! # uint256
+  price: BigInt! # uint256
+  seller: Bytes! # address
+  # The exclamation mark (!) resembles a *required* property
+  # Lack of an exclamation mark resembles an optional property
+  # Since the listing will not have a buyer until it is sold,
+  # We mark the buyer as an optional property
+  buyer: Bytes # address
+}
+```
+
+#### 👀 The Script
+
+Great, we're now finally at the point where we can write our actual script.
+
+One last quick thing before we do that though, run the following command in your terminal from the `subgrah` directory
+
+```
+graph codegen
+```
+
+What this does is, it converts our `schema.graphql` entity into Typescript (actually, AssemblyScript) types so we can do type-safe programming in our script. We will see how now!
+
+Open up `src/nft-marketplace.ts`, and get rid of the sample code, we will understand what we're doing as we go. Replace it with the following:
+
+```typescript
+import {
+  ListingCanceled,
+  ListingCreated,
+  ListingPurchased,
+  ListingUpdated,
+} from "../generated/NFTMarketplace/NFTMarketplace";
+import { store } from "@graphprotocol/graph-ts";
+import { ListingEntity } from "../generated/schema";
+
+export function handleListingCreated(event: ListingCreated): void {}
+
+export function handleListingCanceled(event: ListingCanceled): void {}
+
+export function handleListingPurchased(event: ListingPurchased): void {}
+
+export function handleListingUpdated(event: ListingUpdated): void {}
+```
+
+See the files being imported from the `generated` folder? That's what `graph codegen` does. It converts our contract events and GraphQL entity definitions into Typescript types, so we can use them for type-safe programming in our script.
+
+We have four functions to fill out - the `handle` for each of the events as defined in our manifest. Let's start with the first one, `handleListingCreated`. Insert the following code into the function.
+
+```typescript
+export function handleListingCreated(event: ListingCreated): void {
+  // Create a unique ID that refers to this listing
+  // The NFT Contract Address + Token ID + Seller Address can be used to uniquely refer
+  // to a specific listing
+  const id =
+    event.params.nftAddress.toHex() +
+    "-" +
+    event.params.tokenId.toString() +
+    "-" +
+    event.params.seller.toHex();
+
+  // Create a new entity and assign it's ID
+  let listing = new ListingEntity(id);
+
+  // Set the properties of the listing, as defined in the schema,
+  // based on the event
+  listing.seller = event.params.seller;
+  listing.nftAddress = event.params.nftAddress;
+  listing.tokenId = event.params.tokenId;
+  listing.price = event.params.price;
+
+  // Save the listing to the nodes, so we can query it later
+  listing.save();
+}
+```
+
+Great, the comments in the code should explain what we're doing, but basically
+
+1. We create a new entity
+2. We assign values to the entity based on the event
+3. We save the entity in the store
+
+Now, let's do `handleListingUpdated`, and see how we modify already existing entities. Insert the following code into the function.
+
+```typescript
+export function handleListingUpdated(event: ListingUpdated): void {
+  // Recreate the ID that refers to the listing
+  // Since the listing is being updated,
+  // the datastore must already have an entity with this ID
+  // from when the listing was first created
+  const id =
+    event.params.nftAddress.toHex() +
+    "-" +
+    event.params.tokenId.toString() +
+    "-" +
+    event.params.seller.toHex();
+
+  // Attempt to load a pre-existing entity, instead of creating a new one
+  let listing = ListingEntity.load(id);
+
+  // If it exists
+  if (listing) {
+    // Update the price
+    listing.price = event.params.price;
+
+    // Save the changes
+    listing.save();
+  }
+}
+```
+
+Awesome! Now, let's do `handleListingCanceled`. We don't want to display canceled listings on the marketplace, so we can just delete the entity from the datastore entirely. Insert the following code into the function.
+
+```typescript
+export function handleListingCanceled(event: ListingCanceled): void {
+  // Recreate the ID that refers to the listing
+  // Since the listing is being updated, the datastore must already have an entity with this ID
+  // from when the listing was first created
+  const id =
+    event.params.nftAddress.toHex() +
+    "-" +
+    event.params.tokenId.toString() +
+    "-" +
+    event.params.seller.toHex();
+
+  // Load the listing to see if it exists
+  let listing = ListingEntity.load(id);
+
+  // If it does
+  if (listing) {
+    // Remove it from the store
+    store.remove("ListingEntity", id);
+  }
+}
+```
+
+One thing to note in this code is that there is no way to delete entities using the generated Typescript types directly. i.e. We cannot do something like `listing.remove()`. Instead, we have to use `store.remove()` where `store` is imported from The Graph's libraries. This function takes two parameters - a string which refers to the entity name, in our case `ListingEntity`, and the ID to delete.
+
+Other than that, the code should be pretty straightforward. We just load an entity from the store, and if it exists, we delete it. So it will no longer show up when we query for listings later.
+
+Lastly, let's do `handleListingPurchased`. In this case, we do not want to delete the listing, we just want to set the `buyer` property on it. Then, in the frontend, we can differentiate active listings from sold listings based on whether or not the `buyer` property is present, and then render them accordingly. Insert the following code into the function.
+
+```typescript
+export function handleListingPurchased(event: ListingPurchased): void {
+  // Recreate the ID that refers to the listing
+  // Since the listing is being updated, the datastore must already have an entity with this ID
+  // from when the listing was first created
+  const id =
+    event.params.nftAddress.toHex() +
+    "-" +
+    event.params.tokenId.toString() +
+    "-" +
+    event.params.seller.toHex();
+
+  // Attempt to load a pre-existing entity, instead of creating a new one
+  let listing = ListingEntity.load(id);
+
+  // If it exists
+  if (listing) {
+    // Set the buyer
+    listing.buyer = event.params.buyer;
+
+    // Save the changes
+    listing.save();
+  }
+}
+```
+
+Beautiful! We're done writing our script! Now, time to ship.
+
+#### 🚢 Ship It
+
+The only thing left for us to do now is deploy our subgraph, and watch as the magic happens!
+
+There is only one thing we need to do before that, which is we need to visit our [Graph Dashboard](https://thegraph.com/hosted-service/dashboard), and create a new subgraph definition there.
+
+1. Open the dashboard, and click on `Add Subgraph`
+2. Enter the name `Celo NFT Marketplace`. Your generated subgraph URL should match the subgraph name we set in the CLI earlier, that follows `GITHUB_USERNAME/celo-nft-marketplace`. In my case, this looks like,
+
+<figure><img src=".gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+
+1. Fill in the rest of the information however you'd like
+2. Click on `Create Subgraph`
+
+Now we are good to go! Run the following command in your terminal:
+
+```
+yarn deploy
+```
+
+This should compile your subgraph into WASM, upload some files to IPFS, and deploy your subgraph! If you get some output that looks like this, you're good to go!
+
+```
+Build completed: QmPEnC2jtZhbArAuu6NuYTyfU7HpmcwbMv1dNg5CNWWnqc
+Deployed to https://thegraph.com/explorer/subgraph/haardikk21/Celo-NFT-Marketplace
+Subgraph endpoints:
+Queries (HTTP):     https://api.thegraph.com/subgraphs/name/haardikk21/celo-nft-marketplace
+Subscriptions (WS): wss://api.thegraph.com/subgraphs/name/haardikk21/celo-nft-marketplace
+✨  Done in 16.71s.
+```
+
+Open your [Graph Dashboard](https://thegraph.com/hosted-service/dashboard) and you should see your newly deployed subgraph there!
+
+Click on it, and you may need to wait a bit for it to finish syncing. The Graph's nodes are scanning every block from the `startBlock` to the latest block to find any events that match our data sources!
+
+<figure><img src=".gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+
+#### 👨‍🔧 The Playground
+
+On the subgraph page, you will see a Playground. The Playground is an online interface to run queries on the GraphQL API exposed by the subgraph, and look at the data.
+
+It should, by default, have a sample query for us that looks like this:
+
+```graphql
+{  
+    listingEntities(first: 5) {    
+        id    
+        nftAddress    
+        tokenId    
+        price  
+    }
+}
+```
+
+If we click the purple run button, you will see you get some JSON output like this:
+
+```json
+{  "data": {    "listingEntities": []  }}
+```
+
+Currently this makes sense, since we haven't done anything with our contract and no events have been emitted, so no entities have been created in the datastore.
+
+As we progress and build out the frontend for the dApp in Part 3, we will be creating listings, and seeing our subgraph's datastore getting populated over time with listing entities!
+
+We can then just fetch the listing entities on our frontend through the GraphQL API programmatically!
+
+#### 😐 Updating your subgraph
+
+If you made a mistake at any step, or something doesn't look right, all you need to do to update your subgraph is make whatever code changes you need to make, and then run `yarn deploy` again.
+
+This will redeploy your subgraph, and you can do this as many times as you want.
+
+Note, however, every time you redeploy the subgraph, the node will start syncing over again from the `startBlock`. This is because it's possible you may have made changes on how you want data to be stored - for example, changing how you calculate the ID of each entity, or maybe adding/removing properties from the entity, etc.
+
+Therefore, each update will require you to wait a little bit for the sync to complete, and wait for the node to catchup to the latest block.
