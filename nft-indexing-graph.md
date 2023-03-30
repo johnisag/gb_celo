@@ -437,7 +437,7 @@ Open your [Graph Dashboard](https://thegraph.com/hosted-service/dashboard) and y
 
 Click on it, and you may need to wait a bit for it to finish syncing. The Graph's nodes are scanning every block from the `startBlock` to the latest block to find any events that match our data sources!
 
-<figure><img src=".gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 #### 👨‍🔧 The Playground
 

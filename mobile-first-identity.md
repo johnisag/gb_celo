@@ -45,7 +45,7 @@ Now that we have the pieces of the puzzle, let's start putting them together and
 
 Suppose Alice has a Celo wallet, and wants to link her phone number, to allow her friends and family to easily do transactions with her.
 
-<figure><img src=".gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 First, Alice instructs her wallet to request an attestation from the **`Attestations` smart contract,** that is deployed on the Celo network. To do so, she pays a small gas fees to call a function on the **`Attestations` ** contract.
 
